@@ -1,3 +1,14 @@
+---
+title: Hyperliquid Tracker
+emoji: ⚡
+colorFrom: green
+colorTo: blue
+sdk: gradio
+sdk_version: 4.44.1
+app_file: app.py
+pinned: false
+---
+
 # HyperLiquid Wallet Tracker 🤖
 
 A 24/7 AI agent that monitors any HyperLiquid wallet and notifies you the moment a new position is opened, closed, or resized.

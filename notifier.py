@@ -21,6 +21,15 @@ from config import (
 
 console = Console()
 
+LOG_MESSAGES = []
+
+def add_log(msg: str):
+    from datetime import datetime
+    timestamp = datetime.now().strftime("%H:%M:%S")
+    LOG_MESSAGES.append(f"[{timestamp}] {msg}")
+    if len(LOG_MESSAGES) > 40:
+        LOG_MESSAGES.pop(0)
+
 
 # ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -46,8 +55,12 @@ def _send_telegram(text: str) -> None:
         r = requests.post(url, json=payload, timeout=10)
         if r.status_code != 200:
             console.print(f"[yellow][Telegram] Non-200 response: {r.text[:200]}[/yellow]")
+            add_log(f"⚠️ Telegram send failed: {r.text[:100]}")
+        else:
+            add_log("📤 Sent Telegram alert")
     except Exception as exc:
         console.print(f"[yellow][Telegram] Send error: {exc}[/yellow]")
+        add_log(f"⚠️ Telegram send error: {exc}")
 
 
 def _send_discord(embed: dict) -> None:
@@ -114,6 +127,7 @@ def notify_new_position(wallet: str, alias: str, coin: str, side: str,
         f"🕐 <b>Time:</b> {ts}"
     )
     _send_telegram(tg)
+    add_log(f"🟢 {label} opened {side.upper()} {coin} - Size: {abs(size):,.4f} (~${notional:,.0f})")
 
     # ── Discord ──
     color = 0x00FF88 if side == "Long" else 0xFF4455
@@ -173,6 +187,7 @@ def notify_position_closed(wallet: str, alias: str, coin: str,
         f"🕐 <b>Time:</b> {ts}"
     )
     _send_telegram(tg)
+    add_log(f"✅ {label} closed {coin} {side.upper()} - PnL: {pnl_str}")
 
     # ── Discord ──
     _send_discord({
@@ -227,6 +242,7 @@ def notify_size_change(wallet: str, alias: str, coin: str, side: str,
         f"🕐 <b>Time:</b> {ts}"
     )
     _send_telegram(tg)
+    add_log(f"📈 {label} {action} {coin} {side.upper()} - {abs(old_size):,.4f} → {abs(new_size):,.4f} ({delta_s})")
 
     # ── Discord ──
     _send_discord({
@@ -244,7 +260,9 @@ def notify_size_change(wallet: str, alias: str, coin: str, side: str,
 
 def notify_error(message: str) -> None:
     console.print(f"[bold red][ERROR][/bold red] {message}")
+    add_log(f"❌ ERROR: {message}")
 
 
 def notify_info(message: str) -> None:
     console.print(f"[dim cyan][INFO][/dim cyan] {message}")
+    add_log(f"ℹ️ INFO: {message}")
